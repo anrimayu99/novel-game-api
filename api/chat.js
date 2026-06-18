@@ -8,47 +8,10 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  try {
-    const { message } = req.body;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 200,
-        messages: [
-          {
-            role: 'system',
-            content: `あなたは「サテラ」という名前の謎めいた少女です。
-荒廃した世界の片隅で主人公と出会いました。
-以下のルールで返答してください：
-・一人称は「私」
-・クールで少し謎めいた話し方
-・返答は2文以内で短く
-・日本語で返答する`
-          },
-          {
-            role: 'user',
-            content: message
-          }
-        ]
-      })
-    });
-
-    const data = await response.json();
-    const reply = data.choices[0].message.content;
-    res.status(200).json({ reply });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'サーバーエラーが発生しました' });
-  }
+  // デバッグ用：環境変数が読めているか確認
+  const key = process.env.OPENAI_API_KEY;
+  res.status(200).json({
+    keyExists: !!key,
+    keyPrefix: key ? key.substring(0, 7) : 'none'
+  });
 }
