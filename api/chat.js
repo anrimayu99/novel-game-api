@@ -1,15 +1,15 @@
 export default async function handler(req, res) {
-  // CORSヘッダー（CodePenからのアクセスを許可）
+  // CORSヘッダー（全オリジンからのアクセスを明示的に許可）
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // プリフライトリクエスト対応
+  // プリフライトリクエスト（OPTIONSメソッド）に即座に200を返す
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
-  // POSTメソッド以外は拒否
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -17,16 +17,14 @@ export default async function handler(req, res) {
   try {
     const { message } = req.body;
 
-    // OpenAI APIに送信
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // APIキーはVercelの環境変数から読み込む（コードに直接書かない）
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // 安くて高性能なモデル
+        model: 'gpt-4o-mini',
         max_tokens: 200,
         messages: [
           {
@@ -49,11 +47,6 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     const reply = data.choices[0].message.content;
-
     res.status(200).json({ reply });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'サーバーエラーが発生しました' });
-  }
-}
