@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ノベルゲーム</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: 'Georgia', serif;
+}
+#game {
+  position: relative;
+  width: 800px;
+  height: 450px;
+  background: #1a1a2e;
+  border: 2px solid #4a4a8a;
+  overflow: hidden;
+}
+#background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #0d0d1a 0%, #1a1a3e 60%, #2a1a2e 100%);
+}
+#name-box {
+  position: absolute;
+  bottom: 160px;
+  left: 20px;
+  background: rgba(74,74,138,0.9);
+  color: #e0d0ff;
+  padding: 4px 16px;
+  font-size: 15px;
+  border-left: 3px solid #a080ff;
+  letter-spacing: 2px;
+}
+#text-box {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 150px;
+  background: rgba(10,10,30,0.92);
+  color: #e8e8ff;
+  padding: 20px 24px;
+  font-size: 15px;
+  line-height: 1.8;
+  border-top: 1px solid #4a4a8a;
+}
+#choices {
+  position: absolute;
+  bottom: 160px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.choice-btn {
+  background: rgba(74,74,138,0.85);
+  color: #e0d0ff;
+  border: 1px solid #8070cc;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+}
+.choice-btn:hover { background: rgba(120,100,200,0.9); border-color: #c0a0ff; }
+#input-area {
+  position: absolute;
+  bottom: 160px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 90%;
+}
+#player-input {
+  width: 100%;
+  padding: 10px 16px;
+  background: rgba(20,20,50,0.95);
+  border: 1px solid #8070cc;
+  color: #e0d0ff;
+  font-size: 15px;
+  font-family: 'Georgia', serif;
+  outline: none;
+}
+#player-input:focus { border-color: #c0a0ff; box-shadow: 0 0 8px rgba(160,120,255,0.4); }
+#send-btn {
+  padding: 8px 32px;
+  background: rgba(100,80,180,0.9);
+  color: #e0d0ff;
+  border: 1px solid #a080ff;
+  font-size: 14px;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.2s;
+}
+#send-btn:hover { background: rgba(140,110,220,0.9); }
+#send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="background"></div>
+  <div id="name-box">???</div>
+  <div id="text-box">――荒廃した世界の片隅で、謎めいた少女と出会った。</div>
+  <div id="choices">
+    <button class="choice-btn" onclick="showInputBox()">話しかけてみる</button>
+    <button class="choice-btn" onclick="showText('あなた', 'あなたは少女から立ち去った。しかし、その瞳が頭から離れない…')">立ち去る</button>
+  </div>
+  <div id="input-area">
+    <input type="text" id="player-input" placeholder="サテラに話しかける…" maxlength="100"/>
+    <button id="send-btn" onclick="sendMessage()">送信</button>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://novel-game-api-git-main-holyoneshit-4876s-projects.vercel.app/api/chat';
+
+function showText(name, text) {
+  document.getElementById('name-box').textContent = name;
+  document.getElementById('text-box').textContent = text;
+  document.getElementById('choices').style.display = 'none';
+  document.getElementById('input-area').style.display = 'none';
+}
+
+function showInputBox() {
+  document.getElementById('choices').style.display = 'none';
+  document.getElementById('name-box').textContent = 'サテラ';
+  document.getElementById('text-box').textContent = '……（少女はこちらをじっと見つめている。何を話しかける？）';
+  const inputArea = document.getElementById('input-area');
+  inputArea.style.display = 'flex';
+  document.getElementById('player-input').focus();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('player-input');
+  const userText = input.value.trim();
+  if (!userText) return;
+
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  btn.textContent = '考え中…';
+  document.getElementById('text-box').textContent = '（あなた）「' + userText + '」';
+  input.value = '';
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: userText })
+    });
+    const data = await response.json();
+    document.getElementById('name-box').textContent = 'サテラ';
+    document.getElementById('text-box').textContent = data.reply;
+  } catch (error) {
+    document.getElementById('text-box').textContent = '……（通信エラーが発生しました。もう一度試してください）';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '送信';
+}
+
+document.getElementById('player-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') sendMessage();
+});
+</script>
+</body>
+</html>
