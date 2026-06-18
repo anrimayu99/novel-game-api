@@ -1,10 +1,8 @@
-export default async function handler(req, res) {
-  // CORSヘッダー（全オリジンからのアクセスを明示的に許可）
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // プリフライトリクエスト（OPTIONSメソッド）に即座に200を返す
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -50,3 +48,7 @@ export default async function handler(req, res) {
     res.status(200).json({ reply });
 
   } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'サーバーエラーが発生しました' });
+  }
+}
